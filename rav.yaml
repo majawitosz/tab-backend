@@ -1,0 +1,9 @@
+# @format
+
+scripts:
+    server:
+        - python manage.py runserver
+    migrate:
+        - python manage.py migrate
+    curl_auth: 'curl -X POST -H "Content-Type: application/json" -d "{\"username\": \"test\", \"password\": \"Smarttrampek0\"}" http://127.0.0.1:8000/api/token/pair'
+    curl_protect: 'curl -X GET -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQyNzUyNzg4LCJpYXQiOjE3NDI3NTI0ODgsImp0aSI6IjMzY2IxNmQzNzZkMTRjOWVhMTA3NzgwY2QwZjAxYmY0IiwidXNlcl9pZCI6M30.qzmSaN-M6fXBPdAs0kpkEY-lC4AawgvidlYKVaEnaag" http://127.0.0.1:8000/api/me'
