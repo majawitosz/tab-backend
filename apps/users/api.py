@@ -5,6 +5,7 @@ from ninja_extra import NinjaExtraAPI
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from ninja.errors import HttpError
+from typing import Literal
 
 
 api = NinjaExtraAPI()
@@ -46,3 +47,40 @@ def register(request, data: RegisterSchema):
         "email": user.email,
         "is_authenticated": user.is_authenticated
     }
+
+
+
+ALERGENY = [
+    {"id": 1, "name": "Peanuts"},
+    {"id": 2, "name": "Shellfish"},
+    {"id": 3, "name": "Eggs"},
+    {"id": 4, "name": "Milk"},
+]
+
+
+'''
+@api.get("/alergeny/{sort_by}")
+def alergeny(request, sort_by: Literal["id", "name"]):
+
+
+    sorted_alergeny = sorted(ALERGENY, key=lambda x: x[sort_by])
+    return {"alergeny": sorted_alergeny}
+
+'''
+
+'''
+@api.get("/dania", response=list[Produkty])
+def list_dania(request, typ: str = None, max_cena: float = None):
+    """
+    List all dania
+    """
+    dania = Produkty.objects.all()
+
+    if typ:
+        dania = dania.filter(typ=typ)
+
+    if max_cena:
+        dania = dania.filter(cena__lte=max_cena)
+
+    return list(dania)
+'''

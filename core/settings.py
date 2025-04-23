@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'apps.users',
     'ninja_extra',
     'ninja_jwt',
+    'apps.dania',
 ]
 
 MIDDLEWARE = [

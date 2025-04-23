@@ -17,8 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from apps.users.api import api
+from apps.dania.api import api
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', api.urls),
+
 ]
