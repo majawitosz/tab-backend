@@ -84,7 +84,7 @@ def delete_allergen(request, allergen_id: int):
     obj.delete()
     return {"ok": True}
 
-
+#dwdsd
 # ─── DANIA (MENU ITEMS) ──────────────────────────────────────────────
 
 @api.get("/dania", response=List[MenuItemOut])
