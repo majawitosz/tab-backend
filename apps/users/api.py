@@ -7,8 +7,11 @@ from django.contrib.auth.hashers import make_password
 from ninja.errors import HttpError
 from typing import Literal
 
+api = NinjaExtraAPI(
+    version="1.0.0",
+    urls_namespace="users"
+)
 
-api = NinjaExtraAPI()
 api.register_controllers(NinjaJWTDefaultController)
 
 
