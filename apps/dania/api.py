@@ -10,7 +10,11 @@ from ninja_jwt.controller import NinjaJWTDefaultController
 
 from .models import Allergen, MenuItem
 
-api = NinjaExtraAPI()
+api = NinjaExtraAPI(
+    version="1.0.0",         # unikalna wersja dla dania
+    urls_namespace="dania"   # unikalna przestrzeń nazw
+)
+
 # rejestrujemy endpoints do logowania / tokenów
 api.register_controllers(NinjaJWTDefaultController)  
 

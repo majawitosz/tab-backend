@@ -16,11 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from apps.users.api import api
-from apps.dania.api import api
+from apps.users.api import api as users_api
+from apps.dania.api import api as dishes_api
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', api.urls),
-
+    # wszystkie endpoints związane z auth
+    path('api/users/', users_api.urls),
+    # wszystkie endpoints związane z daniami
+    path('api/dania/', dishes_api.urls),
 ]
+

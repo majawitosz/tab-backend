@@ -34,7 +34,7 @@ SECRET_KEY = 'django-insecure-*_-cr-1+fg+gd!k@oom#(5+fica)+z*(fs7_66d7^@l(ou+0yc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['tab.garbatamalpa.com', "http://localhost:3000",'127.0.0.1']
 
 
 # Application definition
@@ -66,6 +66,7 @@ MIDDLEWARE = [
 ]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+'https://tab.garbatamalpa.com'
 ]
 ROOT_URLCONF = 'core.urls'
 
