@@ -8,7 +8,7 @@ from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 from ninja_jwt.controller import NinjaJWTDefaultController
 
-from .models import Allergen, MenuItem
+from .models import Allergen, MenuItem, Order, OrderItem
 
 api = NinjaExtraAPI(
     version="1.0.0",         # unikalna wersja dla dania
@@ -50,6 +50,18 @@ class MenuItemOut(Schema):
     is_visible: bool
     image_url: Optional[str]
     allergens: List[AllergenOut]  # zagnieżdżone
+
+class OrderItemIn(Schema):
+    menu_item_id: int
+    quantity: int
+
+class OrderIn(Schema):
+    table_number: int
+    status: str
+    estimated_time: int
+    notes: Optional[str] = ""
+    items: List[OrderItemIn]
+
 
 
 
@@ -140,3 +152,41 @@ def delete_menuitem(request, item_id: int):
     item = get_object_or_404(MenuItem, id=item_id)
     item.delete()
     return {"ok": True}
+
+@api.post("/orders", auth=JWTAuth())
+def create_order(request, data: OrderIn):
+    if not data.items:
+        raise HttpError(400, "Zamówienie musi zawierać co najmniej jedną pozycję")
+    estimated_time_order = 0
+    order_items_data = []
+    status_add = "Active"
+
+    for item_data in data.items:
+        menu_item = get_object_or_404(MenuItem, id=item_data.menu_item_id, is_visible=True)
+    #dodać jakoś zliczanie ile czasu będzie trawało zamówienie
+        order_items_data.append({
+            "menu_item": menu_item,
+            "quantity": item_data.quantity,
+            "price_at_time": menu_item.price
+        })
+
+    order = Order.objects.create(
+        user=request.user,
+        table_number=data.table_number,
+        status=status_add,
+        total_amount=data.total_amount,
+        created_at=data.created,
+        estimated_time=estimated_time_order,
+        notes=data.notes or ""
+    )
+
+    # Tworzymy pozycje zamówienia
+    for item in order_items_data:
+        OrderItem.objects.create(
+            order=order,
+            menu_item=item["menu_item"],
+            quantity=item["quantity"],
+            price_at_time=item["price_at_time"]
+        )
+
+    return {"order_id": order.id}

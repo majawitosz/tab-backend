@@ -69,7 +69,6 @@ class OrderItem(models.Model):
     )
     quantity = models.IntegerField()
     price_at_time = models.DecimalField(max_digits=10, decimal_places=2)
-    notes = models.TextField(blank=True)
 
     def __str__(self):
         return f"{self.quantity}× {self.menu_item.name}"
