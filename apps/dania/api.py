@@ -1,14 +1,16 @@
 # apps/dania/api.py
+from datetime import datetime
 from typing import List, Optional, Literal
 
 from django.shortcuts import get_object_or_404
 from ninja import Schema
+from ninja import Body
 from ninja.errors import HttpError
 from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 from ninja_jwt.controller import NinjaJWTDefaultController
 
-from .models import Allergen, MenuItem
+from .models import Allergen, MenuItem, Order, OrderItem
 
 api = NinjaExtraAPI(
     version="1.0.0",         # unikalna wersja dla dania
@@ -51,6 +53,33 @@ class MenuItemOut(Schema):
     image_url: Optional[str]
     allergens: List[AllergenOut]  # zagnieżdżone
 
+class DishIn(Schema):
+    id: int
+    quantity: int
+
+class OrderIn(Schema):
+    tableId: int
+    totalPrice: float
+    createdAt: datetime
+    notes: Optional[str] = ""
+    dishes: List[DishIn]
+
+class OrderItemOut(Schema):
+    menu_item_id: int
+    name: str
+    quantity: int
+    price_at_time: float
+
+class OrderOut(Schema):
+    id: int
+    table_number: int
+    status: str
+    total_amount: float
+    estimated_time: int
+    created_at: str
+    completed_at: Optional[str]
+    notes: Optional[str]
+    items: List[OrderItemOut]
 
 
 @api.get("/alergeny", response=List[AllergenOut])
@@ -65,7 +94,6 @@ def list_allergens(
 @api.get("/alergeny/{allergen_id}", response=AllergenOut)
 def get_allergen(request, allergen_id: int):
     return get_object_or_404(Allergen, id=allergen_id)
-
 
 @api.post("/alergeny", response=AllergenOut, auth=JWTAuth())
 def create_allergen(request, data: AllergenIn):
@@ -140,3 +168,69 @@ def delete_menuitem(request, item_id: int):
     item = get_object_or_404(MenuItem, id=item_id)
     item.delete()
     return {"ok": True}
+
+@api.post("/orders", auth=JWTAuth())
+def create_order(request, data: OrderIn = Body(...)):
+    if not data.dishes:
+        raise HttpError(400, "Zamówienie musi zawierać co najmniej jedno danie")
+
+    estimated_time_order = 0
+    order_items_data = []
+
+    for dish in data.dishes:
+        menu_item = get_object_or_404(MenuItem, id=dish.id, is_visible=True)
+        order_items_data.append({
+            "menu_item": menu_item,
+            "quantity": dish.quantity,
+            "price_at_time": menu_item.price
+        })
+
+    order = Order.objects.create(
+        user=request.user,
+        table_number=data.tableId,
+        status="Active",
+        total_amount=data.totalPrice,
+        estimated_time=estimated_time_order,
+        notes=data.notes or ""
+    )
+
+    for item in order_items_data:
+        OrderItem.objects.create(
+            order=order,
+            menu_item=item["menu_item"],
+            quantity=item["quantity"],
+            price_at_time=item["price_at_time"]
+        )
+
+    return {"order_id": order.id}
+
+@api.get("/orders", response=List[OrderOut], auth=JWTAuth())
+def list_orders(request):
+    orders = Order.objects.prefetch_related("items__menu_item").all()
+    result = []
+
+    for order in orders:
+        items = [
+            OrderItemOut(
+                menu_item_id=item.menu_item.id,
+                name=item.menu_item.name,
+                quantity=item.quantity,
+                price_at_time=float(item.price_at_time),
+            )
+            for item in order.items.all()
+        ]
+
+
+        result.append(OrderOut(
+            id=order.id,
+            table_number=order.table_number,
+            status=order.status,
+            total_amount=float(order.total_amount),
+            estimated_time=order.estimated_time,
+            created_at=order.created_at.isoformat(),
+            completed_at=order.completed_at.isoformat() if order.completed_at else None,
+            notes=order.notes,
+            items=items
+        ))
+
+    return result
