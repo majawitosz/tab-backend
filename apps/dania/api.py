@@ -66,7 +66,7 @@ class OrderIn(Schema):
 
 class OrderItemOut(Schema):
     menu_item_id: int
-    menu_item_name: str
+    name: str
     quantity: int
     price_at_time: float
 
@@ -213,7 +213,7 @@ def list_orders(request):
         items = [
             OrderItemOut(
                 menu_item_id=item.menu_item.id,
-                name=item.menu_item.name,
+                menu_item_name=item.menu_item.name,
                 quantity=item.quantity,
                 price_at_time=float(item.price_at_time),
             )
