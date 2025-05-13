@@ -2,6 +2,7 @@
 from datetime import datetime
 from typing import List, Optional, Literal
 
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from ninja import Schema
 from ninja import Body
@@ -234,3 +235,13 @@ def list_orders(request):
         ))
 
     return result
+
+@api.patch("/orders/{order_id}/status", response=OrderOut, auth=JWTAuth())
+def update_order_status(request, order_id: int, status: str):
+    try:
+        order = Order.objects.get(id=order_id)
+        order.status = status
+        order.save()
+        return OrderOut.from_orm(order)
+    except Order.DoesNotExist:
+        raise Http404("Order not found")
