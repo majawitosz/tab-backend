@@ -220,6 +220,7 @@ def list_orders(request):
             for item in order.items.all()
         ]
 
+
         result.append(OrderOut(
             id=order.id,
             table_number=order.table_number,
