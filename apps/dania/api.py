@@ -236,12 +236,34 @@ def list_orders(request):
 
     return result
 
-@api.patch("/orders/{order_id}/status", response=OrderOut, auth=JWTAuth())
-def update_order_status(request, order_id: int, status: str):
+@api.post("/orders/{orderId}/status", response=OrderOut, auth=JWTAuth())
+def archive_order(request, orderId: int):
     try:
-        order = Order.objects.get(id=order_id)
-        order.status = status
+        order = Order.objects.get(id=orderId)
+        order.status = "Completed"
+        order.completed_at = datetime.now()
         order.save()
-        return OrderOut.from_orm(order)
+
+        items = [
+            OrderItemOut(
+                menu_item_id=item.menu_item.id,
+                name=item.menu_item.name,
+                quantity=item.quantity,
+                price_at_time=float(item.price_at_time),
+            )
+            for item in order.items.all()
+        ]
+
+        return OrderOut(
+            id=order.id,
+            table_number=order.table_number,
+            status=order.status,
+            total_amount=float(order.total_amount),
+            estimated_time=order.estimated_time,
+            created_at=order.created_at.isoformat(),
+            completed_at=order.completed_at.isoformat() if order.completed_at else None,
+            notes=order.notes,
+            items=items
+        )
     except Order.DoesNotExist:
-        raise Http404("Order not found")
+        raise HttpError(404, "Order not found")
