@@ -1,15 +1,19 @@
 # apps/dania/api.py
+import os
 from datetime import datetime
 from typing import List, Optional, Literal
+from uuid import uuid4
 
+from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from ninja import Schema
+from ninja import Schema, File, Form
 from ninja import Body
 from ninja.errors import HttpError
 from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 from ninja_jwt.controller import NinjaJWTDefaultController
+from ninja.files import UploadedFile
 
 from .models import Allergen, MenuItem, Order, OrderItem
 
@@ -21,7 +25,8 @@ api = NinjaExtraAPI(
 # rejestrujemy endpoints do logowania / tokenów
 api.register_controllers(NinjaJWTDefaultController)  
 
-
+UPLOAD_DIR = os.path.join(settings.BASE_DIR, "static", "upload")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 class AllergenIn(Schema):
@@ -137,19 +142,51 @@ def list_menuitems(
 def get_menuitem(request, item_id: int):
     return get_object_or_404(MenuItem, id=item_id, is_visible=True)
 
+
 @api.post("/dania", response=MenuItemOut, auth=JWTAuth())
-def create_menuitem(request, data: MenuItemIn):
+def create_menuitem(
+        request,
+        name: str = Form(...),
+        description: Optional[str] = Form(None),
+        price: float = Form(...),
+        category: str = Form(...),
+        is_available: bool = Form(True),
+        is_visible: bool = Form(True),
+        allergen_ids: str = Form(""),  # oczekujemy stringa z ID oddzielonymi przecinkami, np. "1,2,3"
+        image: Optional[UploadedFile] = File(None)
+):
+    image_url = None
+    if image:
+        if not image.content_type.startswith("image/"):
+            raise HttpError(400, "Invalid file type")
+        ext = os.path.splitext(image.name)[1]
+        filename = f"{uuid4().hex}{ext}"
+        file_path = os.path.join(UPLOAD_DIR, filename)
+        with open(file_path, "wb+") as dest:
+            for chunk in image.chunks():
+                dest.write(chunk)
+        image_url = f"/static/upload/{filename}"
+
+    # Przetwórz allergen_ids (zamień string rozdzielony przecinkami na listę liczb)
+    if allergen_ids:
+        try:
+            allergen_list = [int(x.strip()) for x in allergen_ids.split(",") if x.strip()]
+        except ValueError:
+            allergen_list = []
+    else:
+        allergen_list = []
+
     item = MenuItem.objects.create(
-        name=data.name,
-        description=data.description,
-        price=data.price,
-        category=data.category,
-        is_available=data.is_available,
-        is_visible=data.is_visible,
-        image_url=data.image_url,
+        name=name,
+        description=description,
+        price=price,
+        category=category,
+        is_available=is_available,
+        is_visible=is_visible,
+        image_url=image_url,
     )
-    if data.allergen_ids:
-        item.allergens.set(data.allergen_ids)
+    if allergen_list:
+        item.allergens.set(allergen_list)
     return item
 
 @api.put("/dania/{item_id}", response=MenuItemOut, auth=JWTAuth())
