@@ -25,7 +25,7 @@ api = NinjaExtraAPI(
 # rejestrujemy endpoints do logowania / tokenów
 api.register_controllers(NinjaJWTDefaultController)  
 
-UPLOAD_DIR = os.path.join(settings.BASE_DIR, "static", "upload")
+UPLOAD_DIR = os.path.join(settings.BASE_DIR, "static", "media")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
@@ -166,7 +166,7 @@ def create_menuitem(
         with open(file_path, "wb+") as dest:
             for chunk in image.chunks():
                 dest.write(chunk)
-        image_url = f"/static/upload/{filename}"
+        image_url = f"/media/{filename}"
 
     # Przetwórz allergen_ids (zamień string rozdzielony przecinkami na listę liczb)
     if allergen_ids:
