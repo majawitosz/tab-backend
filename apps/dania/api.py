@@ -230,6 +230,7 @@ def create_order(request, data: OrderIn = Body(...)):
         total_amount=data.totalPrice,
         estimated_time=data.estimatedTime,
         notes=data.notes or ""
+
     )
 
     for item in order_items_data:
