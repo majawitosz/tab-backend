@@ -67,6 +67,7 @@ class OrderIn(Schema):
     tableId: int
     totalPrice: float
     createdAt: datetime
+    estimatedTime: int
     notes: Optional[str] = ""
     dishes: List[DishIn]
 
@@ -212,7 +213,6 @@ def create_order(request, data: OrderIn = Body(...)):
     if not data.dishes:
         raise HttpError(400, "Zamówienie musi zawierać co najmniej jedno danie")
 
-    estimated_time_order = 0
     order_items_data = []
 
     for dish in data.dishes:
@@ -228,7 +228,7 @@ def create_order(request, data: OrderIn = Body(...)):
         table_number=data.tableId,
         status="Active",
         total_amount=data.totalPrice,
-        estimated_time=estimated_time_order,
+        estimated_time=data.estimatedTime,
         notes=data.notes or ""
     )
 
