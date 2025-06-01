@@ -25,7 +25,7 @@ api = NinjaExtraAPI(
 # rejestrujemy endpoints do logowania / tokenów
 api.register_controllers(NinjaJWTDefaultController)  
 
-UPLOAD_DIR = os.path.join(settings.BASE_DIR, "static", "media")
+UPLOAD_DIR = os.path.join(settings.BASE_DIR, "media")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
