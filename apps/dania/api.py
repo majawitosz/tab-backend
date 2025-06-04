@@ -178,8 +178,10 @@ def create_menuitem(
         is_visible=is_visible,
         image_url=image_url,
     )
+    print(allergen_ids)
     if allergen_ids:
         item.allergens.set(allergen_ids)
+    print(allergen_ids)
     return item
 
 
