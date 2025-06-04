@@ -24,7 +24,7 @@ class UserSchema(Schema):
     username: str
     email: str
     is_authenticated: bool
-    is_active: bool
+    is_staff: bool
 
 @api.get("/me", response=UserSchema, auth=JWTAuth())
 def me(request):
