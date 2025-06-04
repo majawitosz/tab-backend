@@ -153,10 +153,10 @@ def create_menuitem(
     category: str = Form(...),
     is_available: bool = Form(True),
     is_visible: bool = Form(True),
-    allergen_ids: str = Form(""),        # pobieramy string "1,2,3"
+    allergen_ids: str = Form(""),
     image: Optional[UploadedFile] = File(None),
 ):
-    # Parsowanie comma-separated string na listę int
+
     try:
         ids = [
             int(x.strip())
@@ -166,7 +166,7 @@ def create_menuitem(
     except Exception:
         raise HttpError(400, "Pole `allergen_ids` musi być listą liczb oddzielonych przecinkami, np. '1,2,3'")
 
-    # Obsługa uploadu pliku
+
     image_url = None
     if image:
         if not image.content_type.startswith("image/"):
@@ -179,7 +179,7 @@ def create_menuitem(
                 f.write(chunk)
         image_url = f"/media/{filename}"
 
-    # Tworzymy rekord w bazie
+
     item = MenuItem.objects.create(
         name=name,
         description=description,
