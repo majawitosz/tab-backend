@@ -305,3 +305,19 @@ def archive_order(request, orderId: int):
         )
     except Order.DoesNotExist:
         raise HttpError(404, "Order not found")
+
+
+@api.post(
+    "/dania/{item_id}/hide",
+    response=MenuItemOut,
+    auth=JWTAuth(),
+    summary="Ukryj pozycję menu"
+)
+def hide_menuitem(request, item_id: int):
+
+    item = get_object_or_404(MenuItem, id=item_id)
+    if not item.is_visible:
+        raise HttpError(400, "Menu item is already hidden")
+    item.is_visible = False
+    item.save(update_fields=["is_visible"])
+    return item
