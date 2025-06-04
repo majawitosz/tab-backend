@@ -146,37 +146,40 @@ def get_menuitem(request, item_id: int):
 
 @api.post("/dania", response=MenuItemOut, auth=JWTAuth())
 def create_menuitem(
-        request,
-        name: str = Form(...),
-        description: Optional[str] = Form(None),
-        price: float = Form(...),
-        category: str = Form(...),
-        is_available: bool = Form(True),
-        is_visible: bool = Form(True),
-        allergen_ids: List[int] = Form([]),
-        image: Optional[UploadedFile] = File(None)
+    request,
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    price: float = Form(...),
+    category: str = Form(...),
+    is_available: bool = Form(True),
+    is_visible: bool = Form(True),
+    allergen_ids: str = Form(""),        # pobieramy string "1,2,3"
+    image: Optional[UploadedFile] = File(None),
 ):
+    # Parsowanie comma-separated string na listę int
+    try:
+        ids = [
+            int(x.strip())
+            for x in allergen_ids.split(",")
+            if x.strip().isdigit()
+        ]
+    except Exception:
+        raise HttpError(400, "Pole `allergen_ids` musi być listą liczb oddzielonych przecinkami, np. '1,2,3'")
+
+    # Obsługa uploadu pliku
     image_url = None
     if image:
         if not image.content_type.startswith("image/"):
-            raise HttpError(400, "Invalid file type")
+            raise HttpError(400, "Nieobsługiwany format pliku")
         ext = os.path.splitext(image.name)[1]
         filename = f"{uuid4().hex}{ext}"
-        file_path = os.path.join(UPLOAD_DIR, filename)
-        with open(file_path, "wb+") as dest:
+        path = os.path.join(UPLOAD_DIR, filename)
+        with open(path, "wb+") as f:
             for chunk in image.chunks():
-                dest.write(chunk)
+                f.write(chunk)
         image_url = f"/media/{filename}"
 
-    # Przetwórz allergen_ids (zamień string rozdzielony przecinkami na listę liczb)
-    if allergen_ids:
-        try:
-            allergen_list = [int(x.strip()) for x in allergen_ids.split(",") if x.strip()]
-        except ValueError:
-            allergen_list = []
-    else:
-        allergen_list = []
-
+    # Tworzymy rekord w bazie
     item = MenuItem.objects.create(
         name=name,
         description=description,
@@ -186,9 +189,12 @@ def create_menuitem(
         is_visible=is_visible,
         image_url=image_url,
     )
-    if allergen_list:
-        item.allergens.set(allergen_list)
+    if ids:
+        item.allergens.set(ids)
+
     return item
+
+
 
 @api.put("/dania/{item_id}", response=MenuItemOut, auth=JWTAuth())
 def update_menuitem(request, item_id: int, data: MenuItemIn):
