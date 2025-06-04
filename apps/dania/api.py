@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from typing import List, Optional, Literal
 from uuid import uuid4
-import json
+
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -146,24 +146,16 @@ def get_menuitem(request, item_id: int):
 
 @api.post("/dania", response=MenuItemOut, auth=JWTAuth())
 def create_menuitem(
-    request,
-    name: str = Form(...),
-    description: Optional[str] = Form(None),
-    price: float = Form(...),
-    category: str = Form(...),
-    is_available: bool = Form(True),
-    is_visible: bool = Form(True),
-    allergen_ids: str = Form("[]"),             # teraz JSON‐string
-    image: Optional[UploadedFile] = File(None)
+        request,
+        name: str = Form(...),
+        description: Optional[str] = Form(None),
+        price: float = Form(...),
+        category: str = Form(...),
+        is_available: bool = Form(True),
+        is_visible: bool = Form(True),
+        allergen_ids: List[int] = Form([]),
+        image: Optional[UploadedFile] = File(None)
 ):
-    try:
-        ids = json.loads(allergen_ids)
-        if not isinstance(ids, list):
-            raise ValueError("Not a list")
-        ids = [int(x) for x in ids]
-    except Exception:
-        raise HttpError(400, "Invalid JSON in allergen_ids; oczekuję np. [1,2,3]")
-
     image_url = None
     if image:
         if not image.content_type.startswith("image/"):
@@ -176,7 +168,15 @@ def create_menuitem(
                 dest.write(chunk)
         image_url = f"/media/{filename}"
 
-    # tworzymy obiekt
+    # Przetwórz allergen_ids (zamień string rozdzielony przecinkami na listę liczb)
+    if allergen_ids:
+        try:
+            allergen_list = [int(x.strip()) for x in allergen_ids.split(",") if x.strip()]
+        except ValueError:
+            allergen_list = []
+    else:
+        allergen_list = []
+
     item = MenuItem.objects.create(
         name=name,
         description=description,
@@ -186,11 +186,9 @@ def create_menuitem(
         is_visible=is_visible,
         image_url=image_url,
     )
-    if ids:
-        item.allergens.set(ids)
+    if allergen_list:
+        item.allergens.set(allergen_list)
     return item
-
-
 
 @api.put("/dania/{item_id}", response=MenuItemOut, auth=JWTAuth())
 def update_menuitem(request, item_id: int, data: MenuItemIn):
