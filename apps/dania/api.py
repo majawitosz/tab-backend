@@ -153,7 +153,7 @@ def create_menuitem(
         category: str = Form(...),
         is_available: bool = Form(True),
         is_visible: bool = Form(True),
-        allergen_ids: str = Form(""),  # oczekujemy stringa z ID oddzielonymi przecinkami, np. "1,2,3"
+        allergen_ids: List[int] = Form([]),
         image: Optional[UploadedFile] = File(None)
 ):
     image_url = None
