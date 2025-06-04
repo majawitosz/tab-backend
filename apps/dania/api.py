@@ -146,15 +146,15 @@ def get_menuitem(request, item_id: int):
 
 @api.post("/dania", response=MenuItemOut, auth=JWTAuth())
 def create_menuitem(
-        request,
-        name: str = Form(...),
-        description: Optional[str] = Form(None),
-        price: float = Form(...),
-        category: str = Form(...),
-        is_available: bool = Form(True),
-        is_visible: bool = Form(True),
-        allergen_ids: List[int] = Form([]),
-        image: Optional[UploadedFile] = File(None)
+    request,
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    price: float = Form(...),
+    category: str = Form(...),
+    is_available: bool = Form(True),
+    is_visible: bool = Form(True),
+    allergen_ids: List[int] = Form(default=[]),      # <-- teraz lista intów
+    image: Optional[UploadedFile] = File(None)
 ):
     image_url = None
     if image:
@@ -168,15 +168,7 @@ def create_menuitem(
                 dest.write(chunk)
         image_url = f"/media/{filename}"
 
-    # Przetwórz allergen_ids (zamień string rozdzielony przecinkami na listę liczb)
-    if allergen_ids:
-        try:
-            allergen_list = [int(x.strip()) for x in allergen_ids.split(",") if x.strip()]
-        except ValueError:
-            allergen_list = []
-    else:
-        allergen_list = []
-
+    # Tworzymy obiekt bez dodatkowego parsowania
     item = MenuItem.objects.create(
         name=name,
         description=description,
@@ -186,9 +178,10 @@ def create_menuitem(
         is_visible=is_visible,
         image_url=image_url,
     )
-    if allergen_list:
-        item.allergens.set(allergen_list)
+    if allergen_ids:
+        item.allergens.set(allergen_ids)
     return item
+
 
 @api.put("/dania/{item_id}", response=MenuItemOut, auth=JWTAuth())
 def update_menuitem(request, item_id: int, data: MenuItemIn):
