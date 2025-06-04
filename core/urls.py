@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path
 from apps.users.api import api as users_api
 from apps.dania.api import api as dishes_api
+from apps.reports.api import api as reports_api
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,5 +26,8 @@ urlpatterns = [
     path('api/users/', users_api.urls),
     # wszystkie endpoints związane z daniami
     path('api/dania/', dishes_api.urls),
+    path("api/reports/", reports_api.urls
+),
+
 ]
 
