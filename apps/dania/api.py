@@ -156,6 +156,7 @@ def create_menuitem(
     allergen_ids: List[int] = Form(default=[]),      # <-- teraz lista intów
     image: Optional[UploadedFile] = File(None)
 ):
+
     image_url = None
     if image:
         if not image.content_type.startswith("image/"):
@@ -167,7 +168,7 @@ def create_menuitem(
             for chunk in image.chunks():
                 dest.write(chunk)
         image_url = f"/media/{filename}"
-
+    print(allergen_ids)
     # Tworzymy obiekt bez dodatkowego parsowania
     item = MenuItem.objects.create(
         name=name,
@@ -178,7 +179,7 @@ def create_menuitem(
         is_visible=is_visible,
         image_url=image_url,
     )
-    print(allergen_ids)
+    print(item)
     if allergen_ids:
         item.allergens.set(allergen_ids)
     print(allergen_ids)
