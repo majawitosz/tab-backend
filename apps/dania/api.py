@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from typing import List, Optional, Literal
 from uuid import uuid4
-
+import json
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -153,9 +153,16 @@ def create_menuitem(
     category: str = Form(...),
     is_available: bool = Form(True),
     is_visible: bool = Form(True),
-    allergen_ids: List[int] = Form(default=[]),      # <-- teraz lista intów
+    allergen_ids: str = Form("[]"),             # teraz JSON‐string
     image: Optional[UploadedFile] = File(None)
 ):
+    try:
+        ids = json.loads(allergen_ids)
+        if not isinstance(ids, list):
+            raise ValueError("Not a list")
+        ids = [int(x) for x in ids]
+    except Exception:
+        raise HttpError(400, "Invalid JSON in allergen_ids; oczekuję np. [1,2,3]")
 
     image_url = None
     if image:
@@ -168,8 +175,8 @@ def create_menuitem(
             for chunk in image.chunks():
                 dest.write(chunk)
         image_url = f"/media/{filename}"
-    print(allergen_ids)
-    # Tworzymy obiekt bez dodatkowego parsowania
+
+    # tworzymy obiekt
     item = MenuItem.objects.create(
         name=name,
         description=description,
@@ -179,11 +186,10 @@ def create_menuitem(
         is_visible=is_visible,
         image_url=image_url,
     )
-    print(item)
-    if allergen_ids:
-        item.allergens.set(allergen_ids)
-    print(allergen_ids)
+    if ids:
+        item.allergens.set(ids)
     return item
+
 
 
 @api.put("/dania/{item_id}", response=MenuItemOut, auth=JWTAuth())
